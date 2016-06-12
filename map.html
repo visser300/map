@@ -60,6 +60,10 @@
     	-moz-border-radius: 3px;
     	border-radius: 3px;
       }
+
+      .gm-style-mtc {
+  		display: none;
+	  }
     </style>
   </head>
   <body>
@@ -72,14 +76,20 @@
     
     <script>
     
+      // marker for start
+      var marker = null;
+      var map = null;
+      var startAuto;
+      var endAuto;
+      
 	  // init function
       function initMap() {
     	  
-    	new google.maps.places.Autocomplete(
+    	  startAuto = new google.maps.places.Autocomplete(
     	  	(document.getElementById('start')),
     	    {types: ['geocode']});
     	  
-    	new google.maps.places.Autocomplete(
+    	  endAuto = new google.maps.places.Autocomplete(
     	  	(document.getElementById('end')),
     	    {types: ['geocode']});
     	  
@@ -89,7 +99,9 @@
             map: map,
         });
         
-        var map = new google.maps.Map(document.getElementById('map'), {
+        geocoder = new google.maps.Geocoder();
+        
+        map = new google.maps.Map(document.getElementById('map'), {
         	draggable: true,
           	zoom: 3,
           	center: {lat: 41.85, lng: -87.65}
@@ -128,6 +140,12 @@
     	  var start = document.getElementById('start').value;
     	  var end = document.getElementById('end').value;
     	  
+    	  // delete marker
+    	  if (marker) {
+    		  
+    		  marker.setMap(null);
+    	  }
+    	  
     	  if (start && end) {
 
     	        directionsService.route({
@@ -144,6 +162,24 @@
     	        	  alert('Cannot draw direction');
     	          }
 				});
+    	  } else if (start) {
+    		  
+    		  setTimeout(function() {
+    			  
+        		  geocoder.geocode( { 'address': document.getElementById('start').value}, function(results, status) {
+        			  
+        			  if (status == google.maps.GeocoderStatus.OK) {
+        			      
+        				  map.setCenter(results[0].geometry.location);
+        				  map.setZoom(16);
+        				  
+        			      marker = new google.maps.Marker({
+        			          map: map,
+        			          position: results[0].geometry.location
+        			      });
+        			  }
+        		  });
+    		  }, 300);
     	  }
       }
       
@@ -163,8 +199,12 @@
 	              center: geolocation,
 	              radius: position.coords.accuracy
 	            });
-	            
-            	autocomplete.setBounds(circle.getBounds());
+
+	            startAuto.setBounds(circle.getBounds());
+	            endAuto.setBounds(circle.getBounds());
+            	
+            	map.setCenter(new google.maps.LatLng(geolocation.lat , geolocation.lng));
+            	map.setZoom(16);
           });
         }
       }
